@@ -19,10 +19,20 @@ class _DeviceCareScreenState extends ConsumerState<DeviceCareScreen> {
 
   void _runScan() async {
     setState(() => _isScanning = true);
-    // Vibrate to indicate scan start
-    const MethodChannel('com.example.deviceinsight/native').invokeMethod('vibrate', {'duration': 100});
+    // Vibrate to indicate scan start — wrapped in try/catch to prevent PlatformException crash
+    try {
+      await const MethodChannel('com.example.deviceinsight/native')
+          .invokeMethod('vibrate', {'duration': 100});
+    } catch (_) {
+      // Haptic feedback unavailable on this device/emulator — continue scan normally
+    }
     await Future.delayed(const Duration(seconds: 2)); // Simulate deep scan
-    const MethodChannel('com.example.deviceinsight/native').invokeMethod('vibrate', {'duration': 200});
+    try {
+      await const MethodChannel('com.example.deviceinsight/native')
+          .invokeMethod('vibrate', {'duration': 200});
+    } catch (_) {
+      // Haptic feedback unavailable — ignore
+    }
     if (mounted) setState(() => _isScanning = false);
   }
 

@@ -38,8 +38,8 @@ class ScaffoldWithNavBar extends StatelessWidget {
             label: 'CPU',
           ),
           NavigationDestination(
-            icon: Icon(Icons.memory_outlined),
-            selectedIcon: Icon(Icons.memory),
+            icon: Icon(Icons.psychology_outlined),
+            selectedIcon: Icon(Icons.psychology),
             label: 'Memory',
           ),
           NavigationDestination(
@@ -51,6 +51,11 @@ class ScaffoldWithNavBar extends StatelessWidget {
             icon: Icon(Icons.storage_outlined),
             selectedIcon: Icon(Icons.storage),
             label: 'Storage',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.security_outlined),
+            selectedIcon: Icon(Icons.security),
+            label: 'Security',
           ),
         ],
       ),

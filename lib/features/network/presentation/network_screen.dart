@@ -121,7 +121,7 @@ class NetworkScreen extends ConsumerWidget {
                 gapH24,
 
                 ElevatedButton.icon(
-                  onPressed: () => context.push('/speed-test'),
+                  onPressed: () => context.push('/network/speed-test'),
                   icon: const Icon(Icons.speed),
                   label: const Text('Run Professional Speed Test'),
                   style: ElevatedButton.styleFrom(
