@@ -16,6 +16,8 @@ _BatteryInfo _$BatteryInfoFromJson(Map<String, dynamic> json) => _BatteryInfo(
   technology: json['technology'] as String? ?? 'Unknown',
   cycleCount: (json['cycleCount'] as num?)?.toInt() ?? 0,
   capacity: (json['capacity'] as num?)?.toInt() ?? 0,
+  currentNow: (json['currentNow'] as num?)?.toInt() ?? 0,
+  batteryWear: (json['batteryWear'] as num?)?.toDouble() ?? 0.0,
 );
 
 Map<String, dynamic> _$BatteryInfoToJson(_BatteryInfo instance) =>
@@ -29,4 +31,6 @@ Map<String, dynamic> _$BatteryInfoToJson(_BatteryInfo instance) =>
       'technology': instance.technology,
       'cycleCount': instance.cycleCount,
       'capacity': instance.capacity,
+      'currentNow': instance.currentNow,
+      'batteryWear': instance.batteryWear,
     };

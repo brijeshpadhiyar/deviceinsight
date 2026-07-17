@@ -1,31 +1,36 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/memory_stats.dart';
 
-final memoryNotifierProvider = StreamProvider.autoDispose<MemoryStats>((ref) async* {
-  const channel = MethodChannel('com.example.deviceinsight/native');
-  
-  // Yield initial value
-  try {
-    final result = await channel.invokeMapMethod<String, dynamic>('getMemoryInfo');
-    if (result != null) {
-      yield MemoryStats.fromJson(result);
-    }
-  } catch (_) {}
+part 'memory_provider.g.dart';
 
-  // Poll every 2 seconds
-  bool isClosed = false;
-  ref.onDispose(() => isClosed = true);
-  
-  while (!isClosed) {
-    await Future.delayed(const Duration(seconds: 2));
-    if (isClosed) break;
-    try {
-      final result = await channel.invokeMapMethod<String, dynamic>('getMemoryInfo');
-      if (result != null) {
-        yield MemoryStats.fromJson(result);
-      }
-    } catch (_) {}
+@riverpod
+class MemoryNotifier extends _$MemoryNotifier {
+  static const _channel = MethodChannel('com.example.deviceinsight/native');
+  final List<double> _history = [];
+
+  @override
+  Stream<MemoryStats> build() async* {
+    while (true) {
+      try {
+        final result = await _channel.invokeMapMethod<String, dynamic>('getMemoryInfo');
+        if (result != null) {
+          final stats = MemoryStats.fromJson(result);
+          final usagePercent = stats.totalMemory > 0 
+              ? (stats.usedMemory / stats.totalMemory) * 100 
+              : 0.0;
+          
+          _history.add(usagePercent);
+          if (_history.length > 30) {
+            _history.removeAt(0);
+          }
+          yield stats;
+        }
+      } catch (_) {}
+      await Future.delayed(const Duration(seconds: 2));
+    }
   }
-});
+
+  List<double> get history => _history;
+}

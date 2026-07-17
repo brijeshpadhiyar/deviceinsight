@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BatteryInfo {
 
- double get percentage; bool get isCharging; String get status; double get temperature; double get voltage; String get health; String get technology; int get cycleCount; int get capacity;
+ double get percentage; bool get isCharging; String get status; double get temperature; double get voltage; String get health; String get technology; int get cycleCount; int get capacity; int get currentNow; double get batteryWear;
 /// Create a copy of BatteryInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $BatteryInfoCopyWith<BatteryInfo> get copyWith => _$BatteryInfoCopyWithImpl<Batt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BatteryInfo&&(identical(other.percentage, percentage) || other.percentage == percentage)&&(identical(other.isCharging, isCharging) || other.isCharging == isCharging)&&(identical(other.status, status) || other.status == status)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.voltage, voltage) || other.voltage == voltage)&&(identical(other.health, health) || other.health == health)&&(identical(other.technology, technology) || other.technology == technology)&&(identical(other.cycleCount, cycleCount) || other.cycleCount == cycleCount)&&(identical(other.capacity, capacity) || other.capacity == capacity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BatteryInfo&&(identical(other.percentage, percentage) || other.percentage == percentage)&&(identical(other.isCharging, isCharging) || other.isCharging == isCharging)&&(identical(other.status, status) || other.status == status)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.voltage, voltage) || other.voltage == voltage)&&(identical(other.health, health) || other.health == health)&&(identical(other.technology, technology) || other.technology == technology)&&(identical(other.cycleCount, cycleCount) || other.cycleCount == cycleCount)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.currentNow, currentNow) || other.currentNow == currentNow)&&(identical(other.batteryWear, batteryWear) || other.batteryWear == batteryWear));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,percentage,isCharging,status,temperature,voltage,health,technology,cycleCount,capacity);
+int get hashCode => Object.hash(runtimeType,percentage,isCharging,status,temperature,voltage,health,technology,cycleCount,capacity,currentNow,batteryWear);
 
 @override
 String toString() {
-  return 'BatteryInfo(percentage: $percentage, isCharging: $isCharging, status: $status, temperature: $temperature, voltage: $voltage, health: $health, technology: $technology, cycleCount: $cycleCount, capacity: $capacity)';
+  return 'BatteryInfo(percentage: $percentage, isCharging: $isCharging, status: $status, temperature: $temperature, voltage: $voltage, health: $health, technology: $technology, cycleCount: $cycleCount, capacity: $capacity, currentNow: $currentNow, batteryWear: $batteryWear)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $BatteryInfoCopyWith<$Res>  {
   factory $BatteryInfoCopyWith(BatteryInfo value, $Res Function(BatteryInfo) _then) = _$BatteryInfoCopyWithImpl;
 @useResult
 $Res call({
- double percentage, bool isCharging, String status, double temperature, double voltage, String health, String technology, int cycleCount, int capacity
+ double percentage, bool isCharging, String status, double temperature, double voltage, String health, String technology, int cycleCount, int capacity, int currentNow, double batteryWear
 });
 
 
@@ -65,7 +65,7 @@ class _$BatteryInfoCopyWithImpl<$Res>
 
 /// Create a copy of BatteryInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? percentage = null,Object? isCharging = null,Object? status = null,Object? temperature = null,Object? voltage = null,Object? health = null,Object? technology = null,Object? cycleCount = null,Object? capacity = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? percentage = null,Object? isCharging = null,Object? status = null,Object? temperature = null,Object? voltage = null,Object? health = null,Object? technology = null,Object? cycleCount = null,Object? capacity = null,Object? currentNow = null,Object? batteryWear = null,}) {
   return _then(_self.copyWith(
 percentage: null == percentage ? _self.percentage : percentage // ignore: cast_nullable_to_non_nullable
 as double,isCharging: null == isCharging ? _self.isCharging : isCharging // ignore: cast_nullable_to_non_nullable
@@ -76,7 +76,9 @@ as double,health: null == health ? _self.health : health // ignore: cast_nullabl
 as String,technology: null == technology ? _self.technology : technology // ignore: cast_nullable_to_non_nullable
 as String,cycleCount: null == cycleCount ? _self.cycleCount : cycleCount // ignore: cast_nullable_to_non_nullable
 as int,capacity: null == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
-as int,
+as int,currentNow: null == currentNow ? _self.currentNow : currentNow // ignore: cast_nullable_to_non_nullable
+as int,batteryWear: null == batteryWear ? _self.batteryWear : batteryWear // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -161,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double percentage,  bool isCharging,  String status,  double temperature,  double voltage,  String health,  String technology,  int cycleCount,  int capacity)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double percentage,  bool isCharging,  String status,  double temperature,  double voltage,  String health,  String technology,  int cycleCount,  int capacity,  int currentNow,  double batteryWear)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BatteryInfo() when $default != null:
-return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature,_that.voltage,_that.health,_that.technology,_that.cycleCount,_that.capacity);case _:
+return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature,_that.voltage,_that.health,_that.technology,_that.cycleCount,_that.capacity,_that.currentNow,_that.batteryWear);case _:
   return orElse();
 
 }
@@ -182,10 +184,10 @@ return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double percentage,  bool isCharging,  String status,  double temperature,  double voltage,  String health,  String technology,  int cycleCount,  int capacity)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double percentage,  bool isCharging,  String status,  double temperature,  double voltage,  String health,  String technology,  int cycleCount,  int capacity,  int currentNow,  double batteryWear)  $default,) {final _that = this;
 switch (_that) {
 case _BatteryInfo():
-return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature,_that.voltage,_that.health,_that.technology,_that.cycleCount,_that.capacity);case _:
+return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature,_that.voltage,_that.health,_that.technology,_that.cycleCount,_that.capacity,_that.currentNow,_that.batteryWear);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -202,10 +204,10 @@ return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double percentage,  bool isCharging,  String status,  double temperature,  double voltage,  String health,  String technology,  int cycleCount,  int capacity)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double percentage,  bool isCharging,  String status,  double temperature,  double voltage,  String health,  String technology,  int cycleCount,  int capacity,  int currentNow,  double batteryWear)?  $default,) {final _that = this;
 switch (_that) {
 case _BatteryInfo() when $default != null:
-return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature,_that.voltage,_that.health,_that.technology,_that.cycleCount,_that.capacity);case _:
+return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature,_that.voltage,_that.health,_that.technology,_that.cycleCount,_that.capacity,_that.currentNow,_that.batteryWear);case _:
   return null;
 
 }
@@ -217,7 +219,7 @@ return $default(_that.percentage,_that.isCharging,_that.status,_that.temperature
 @JsonSerializable()
 
 class _BatteryInfo implements BatteryInfo {
-  const _BatteryInfo({this.percentage = 0.0, this.isCharging = false, this.status = 'Unknown', this.temperature = 0.0, this.voltage = 0.0, this.health = 'Unknown', this.technology = 'Unknown', this.cycleCount = 0, this.capacity = 0});
+  const _BatteryInfo({this.percentage = 0.0, this.isCharging = false, this.status = 'Unknown', this.temperature = 0.0, this.voltage = 0.0, this.health = 'Unknown', this.technology = 'Unknown', this.cycleCount = 0, this.capacity = 0, this.currentNow = 0, this.batteryWear = 0.0});
   factory _BatteryInfo.fromJson(Map<String, dynamic> json) => _$BatteryInfoFromJson(json);
 
 @override@JsonKey() final  double percentage;
@@ -229,6 +231,8 @@ class _BatteryInfo implements BatteryInfo {
 @override@JsonKey() final  String technology;
 @override@JsonKey() final  int cycleCount;
 @override@JsonKey() final  int capacity;
+@override@JsonKey() final  int currentNow;
+@override@JsonKey() final  double batteryWear;
 
 /// Create a copy of BatteryInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -243,16 +247,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BatteryInfo&&(identical(other.percentage, percentage) || other.percentage == percentage)&&(identical(other.isCharging, isCharging) || other.isCharging == isCharging)&&(identical(other.status, status) || other.status == status)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.voltage, voltage) || other.voltage == voltage)&&(identical(other.health, health) || other.health == health)&&(identical(other.technology, technology) || other.technology == technology)&&(identical(other.cycleCount, cycleCount) || other.cycleCount == cycleCount)&&(identical(other.capacity, capacity) || other.capacity == capacity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BatteryInfo&&(identical(other.percentage, percentage) || other.percentage == percentage)&&(identical(other.isCharging, isCharging) || other.isCharging == isCharging)&&(identical(other.status, status) || other.status == status)&&(identical(other.temperature, temperature) || other.temperature == temperature)&&(identical(other.voltage, voltage) || other.voltage == voltage)&&(identical(other.health, health) || other.health == health)&&(identical(other.technology, technology) || other.technology == technology)&&(identical(other.cycleCount, cycleCount) || other.cycleCount == cycleCount)&&(identical(other.capacity, capacity) || other.capacity == capacity)&&(identical(other.currentNow, currentNow) || other.currentNow == currentNow)&&(identical(other.batteryWear, batteryWear) || other.batteryWear == batteryWear));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,percentage,isCharging,status,temperature,voltage,health,technology,cycleCount,capacity);
+int get hashCode => Object.hash(runtimeType,percentage,isCharging,status,temperature,voltage,health,technology,cycleCount,capacity,currentNow,batteryWear);
 
 @override
 String toString() {
-  return 'BatteryInfo(percentage: $percentage, isCharging: $isCharging, status: $status, temperature: $temperature, voltage: $voltage, health: $health, technology: $technology, cycleCount: $cycleCount, capacity: $capacity)';
+  return 'BatteryInfo(percentage: $percentage, isCharging: $isCharging, status: $status, temperature: $temperature, voltage: $voltage, health: $health, technology: $technology, cycleCount: $cycleCount, capacity: $capacity, currentNow: $currentNow, batteryWear: $batteryWear)';
 }
 
 
@@ -263,7 +267,7 @@ abstract mixin class _$BatteryInfoCopyWith<$Res> implements $BatteryInfoCopyWith
   factory _$BatteryInfoCopyWith(_BatteryInfo value, $Res Function(_BatteryInfo) _then) = __$BatteryInfoCopyWithImpl;
 @override @useResult
 $Res call({
- double percentage, bool isCharging, String status, double temperature, double voltage, String health, String technology, int cycleCount, int capacity
+ double percentage, bool isCharging, String status, double temperature, double voltage, String health, String technology, int cycleCount, int capacity, int currentNow, double batteryWear
 });
 
 
@@ -280,7 +284,7 @@ class __$BatteryInfoCopyWithImpl<$Res>
 
 /// Create a copy of BatteryInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? percentage = null,Object? isCharging = null,Object? status = null,Object? temperature = null,Object? voltage = null,Object? health = null,Object? technology = null,Object? cycleCount = null,Object? capacity = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? percentage = null,Object? isCharging = null,Object? status = null,Object? temperature = null,Object? voltage = null,Object? health = null,Object? technology = null,Object? cycleCount = null,Object? capacity = null,Object? currentNow = null,Object? batteryWear = null,}) {
   return _then(_BatteryInfo(
 percentage: null == percentage ? _self.percentage : percentage // ignore: cast_nullable_to_non_nullable
 as double,isCharging: null == isCharging ? _self.isCharging : isCharging // ignore: cast_nullable_to_non_nullable
@@ -291,7 +295,9 @@ as double,health: null == health ? _self.health : health // ignore: cast_nullabl
 as String,technology: null == technology ? _self.technology : technology // ignore: cast_nullable_to_non_nullable
 as String,cycleCount: null == cycleCount ? _self.cycleCount : cycleCount // ignore: cast_nullable_to_non_nullable
 as int,capacity: null == capacity ? _self.capacity : capacity // ignore: cast_nullable_to_non_nullable
-as int,
+as int,currentNow: null == currentNow ? _self.currentNow : currentNow // ignore: cast_nullable_to_non_nullable
+as int,batteryWear: null == batteryWear ? _self.batteryWear : batteryWear // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 

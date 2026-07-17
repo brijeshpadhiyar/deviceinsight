@@ -19,17 +19,20 @@ class MemoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final memoryAsync = ref.watch(memoryNotifierProvider);
+    final memoryAsync = ref.watch(memoryProvider);
+    final history = ref.read(memoryProvider.notifier).history;
     final theme = Theme.of(context);
-
+    
     return Scaffold(
-      appBar: AppBar(title: const Text('Memory Analyzer')),
+      appBar: AppBar(title: const Text('Memory Analyzer'), backgroundColor: Colors.transparent),
       body: memoryAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
         data: (memory) {
           final usagePercent = memory.totalMemory > 0 
               ? (memory.usedMemory / memory.totalMemory) * 100 
               : 0.0;
-          
+              
           return SingleChildScrollView(
             padding: const EdgeInsets.all(AppSizes.p20),
             child: Column(
@@ -37,11 +40,14 @@ class MemoryScreen extends ConsumerWidget {
               children: [
                 _buildMainChart(usagePercent, theme),
                 gapH24,
+                _buildHistoryChart(history, theme),
+                gapH24,
                 _buildDetailsGrid(memory, theme),
                 gapH24,
-                if (memory.isLowMemory)
+                if (memory.isLowMemory) ...[
                   _buildWarning(theme),
-                gapH24,
+                  gapH24,
+                ],
                 const EducationalCard(
                   title: 'What is RAM?',
                   icon: Icons.memory,
@@ -56,8 +62,6 @@ class MemoryScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }
@@ -117,6 +121,66 @@ class MemoryScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildHistoryChart(List<double> history, ThemeData theme) {
+    List<FlSpot> spots = [];
+    if (history.isEmpty) {
+      spots = [const FlSpot(0, 0)];
+    } else {
+      for (int i = 0; i < history.length; i++) {
+        spots.add(FlSpot(i.toDouble(), history[i]));
+      }
+    }
+
+    return GlassCard(
+      padding: const EdgeInsets.all(AppSizes.p20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.show_chart, color: Colors.purple, size: 20),
+              gapW8,
+              Text(
+                'Memory Pressure Trend',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          gapH16,
+          SizedBox(
+            height: 150,
+            child: LineChart(
+              LineChartData(
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: 30,
+                minY: 0,
+                maxY: 100,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: spots,
+                    isCurved: true,
+                    color: Colors.purple,
+                    barWidth: 3,
+                    dotData: const FlDotData(show: false),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: Colors.purple.withValues(alpha: 0.2),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 200.ms);
   }
 
   Widget _buildDetailsGrid(dynamic memory, ThemeData theme) {

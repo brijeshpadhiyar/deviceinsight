@@ -67,6 +67,13 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, DashboardState state, ThemeData theme) {
+    final bool isOverheating = state.batteryTemperature > 40.0;
+    final bool isPoorHealth = state.overallHealthScore < 50;
+    
+    final statusColor = isOverheating ? AppColors.error : (isPoorHealth ? AppColors.healthPoor : AppColors.healthExcellent);
+    final statusIcon = isOverheating ? Icons.local_fire_department : (isPoorHealth ? Icons.warning_amber : Icons.verified_user);
+    final statusText = isOverheating ? 'Overheating' : (isPoorHealth ? 'Attention' : 'Protected');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -83,18 +90,18 @@ class DashboardScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.healthExcellent.withValues(alpha: 0.1),
+                color: statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.healthExcellent.withValues(alpha: 0.3)),
+                border: Border.all(color: statusColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.verified_user, color: AppColors.healthExcellent, size: 16),
+                  Icon(statusIcon, color: statusColor, size: 16),
                   gapW4,
                   Text(
-                    'Protected',
+                    statusText,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: AppColors.healthExcellent,
+                      color: statusColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

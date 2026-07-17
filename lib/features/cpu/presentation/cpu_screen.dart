@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/live_gauge.dart';
 import '../../shared/widgets/educational_card.dart';
@@ -16,7 +17,10 @@ class CpuScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cpuAsync = ref.watch(cpuStreamProvider);
+    final cpuAsync = ref.watch(cpuProvider);
+    final history = ref.read(cpuProvider.notifier).history;
+    final dashboardState = ref.watch(dashboardProvider);
+    final isThrottling = dashboardState.batteryTemperature > 40.0;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -25,34 +29,36 @@ class CpuScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
       ),
       body: cpuAsync.when(
-        data: (cpu) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSizes.p20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildMainGauge(cpu, theme),
-                gapH24,
-                _buildCpuChart(cpu, theme),
-                gapH24,
-                _buildDetailsGrid(cpu, theme),
-                gapH24,
-                const EducationalCard(
-                  title: 'CPU Architecture & Governors',
-                  icon: Icons.memory,
-                  content: 'Your Central Processing Unit (CPU) executes all device operations. Multi-core processors split tasks to improve efficiency. The "Governor" decides when to ramp up clock speed (for performance) or scale down (to save battery).',
-                  optimizationTips: [
-                    'High CPU usage directly causes battery drain and thermal throttling.',
-                    'Clear recent apps to stop runaway background processes.',
-                    'If the device overheats, the CPU automatically slows down (throttling) to prevent damage.',
-                  ],
-                ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
-              ],
-            ),
-          );
-        },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        error: (error, stack) => Center(child: Text('Error: $error')),
+        data: (cpu) => SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSizes.p20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildMainGauge(cpu, theme),
+              gapH24,
+              if (isThrottling) ...[
+                _buildThrottlingWarning(theme),
+                gapH24,
+              ],
+              _buildCpuChart(cpu, history, theme),
+              gapH24,
+              _buildDetailsGrid(cpu, theme),
+              gapH24,
+              const EducationalCard(
+                title: 'CPU Architecture & Governors',
+                icon: Icons.memory,
+                content: 'Your Central Processing Unit (CPU) executes all device operations. Multi-core processors split tasks to improve efficiency. The "Governor" decides when to ramp up clock speed (for performance) or scale down (to save battery).',
+                optimizationTips: [
+                  'High CPU usage directly causes battery drain and thermal throttling.',
+                  'Clear recent apps to stop runaway background processes.',
+                  'If the device overheats, the CPU automatically slows down (throttling) to prevent damage.',
+                ],
+              ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -74,7 +80,42 @@ class CpuScreen extends ConsumerWidget {
     ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
   }
 
-  Widget _buildCpuChart(CpuInfo cpu, ThemeData theme) {
+  Widget _buildThrottlingWarning(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.p16),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning, color: AppColors.error),
+          gapW12,
+          Expanded(
+            child: Text(
+              'Thermal Throttling Active! CPU performance is reduced to lower device temperature.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().shake(delay: 500.ms);
+  }
+
+  Widget _buildCpuChart(CpuInfo cpu, List<double> history, ThemeData theme) {
+    List<FlSpot> spots = [];
+    if (history.isEmpty) {
+      spots = [const FlSpot(0, 0)];
+    } else {
+      for (int i = 0; i < history.length; i++) {
+        spots.add(FlSpot(i.toDouble(), history[i]));
+      }
+    }
+
     return GlassCard(
       padding: const EdgeInsets.all(AppSizes.p20),
       child: Column(
@@ -82,7 +123,7 @@ class CpuScreen extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.auto_graph, color: AppColors.info, size: 20),
+              const Icon(Icons.auto_graph, color: AppColors.info, size: 20),
               gapW8,
               Text(
                 'Utilization Trend',
@@ -100,15 +141,13 @@ class CpuScreen extends ConsumerWidget {
                 gridData: const FlGridData(show: false),
                 titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: 30,
+                minY: 0,
+                maxY: 100,
                 lineBarsData: [
                   LineChartBarData(
-                    spots: [
-                      const FlSpot(0, 10),
-                      const FlSpot(1, 20),
-                      const FlSpot(2, 15),
-                      const FlSpot(3, 40),
-                      FlSpot(4, cpu.overallUsage),
-                    ],
+                    spots: spots,
                     isCurved: true,
                     color: AppColors.info,
                     barWidth: 4,

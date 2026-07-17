@@ -308,6 +308,26 @@ class MainActivity: FlutterActivity() {
             else -> "Unknown"
         }
 
+        var capacity = 0
+        var currentNow = 0
+        try {
+            val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+            val chargeCounter = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) // in microAh
+            currentNow = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) // in microA
+
+            if (chargeCounter > 0 && batteryPct > 0) {
+                // Estimate total capacity in mAh
+                val totalMicroAh = (chargeCounter * 100) / batteryPct
+                capacity = (totalMicroAh / 1000).toInt()
+            } else {
+                // Fallback reflection for PowerProfile
+                val powerProfileClass = Class.forName("com.android.internal.os.PowerProfile")
+                val mPowerProfile = powerProfileClass.getConstructor(Context::class.java).newInstance(context)
+                val batteryCapacity = powerProfileClass.getMethod("getBatteryCapacity").invoke(mPowerProfile) as Double
+                capacity = batteryCapacity.toInt()
+            }
+        } catch (e: Exception) {}
+
         return mapOf(
             "percentage" to batteryPct,
             "isCharging" to isCharging,
@@ -317,7 +337,8 @@ class MainActivity: FlutterActivity() {
             "health" to healthString,
             "technology" to tech,
             "cycleCount" to 0,
-            "capacity" to 0
+            "capacity" to capacity,
+            "currentNow" to currentNow
         )
     }
 

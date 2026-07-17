@@ -130,6 +130,7 @@ class AppDetailsScreen extends ConsumerWidget {
                               .read(packageServiceProvider)
                               .launchApp(packageName);
                         } catch (e) {
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(

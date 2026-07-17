@@ -111,12 +111,16 @@ class BatteryScreen extends ConsumerWidget {
   }
 
   Widget _buildDetailsGrid(BatteryInfo battery, ThemeData theme) {
+    final String speedStr = battery.isCharging 
+        ? (battery.currentNow > 0 ? '${(battery.currentNow / 1000).toStringAsFixed(0)} mA' : 'Fast')
+        : (battery.currentNow < 0 ? '${(battery.currentNow / 1000).toStringAsFixed(0)} mA' : 'Idle');
+
     final details = [
       {'title': 'Health', 'value': battery.health, 'icon': Icons.favorite, 'color': AppColors.healthExcellent},
       {'title': 'Temperature', 'value': '${battery.temperature.toStringAsFixed(1)}°C', 'icon': Icons.thermostat, 'color': battery.temperature > 39 ? AppColors.error : Colors.orange},
       {'title': 'Voltage', 'value': '${battery.voltage.toInt()} mV', 'icon': Icons.electric_bolt, 'color': Colors.blue},
-      {'title': 'Technology', 'value': battery.technology, 'icon': Icons.memory, 'color': Colors.purple},
       {'title': 'Capacity', 'value': battery.capacity > 0 ? '${battery.capacity} mAh' : 'Unknown', 'icon': Icons.battery_full, 'color': Colors.teal},
+      {'title': 'Speed / Drain', 'value': speedStr, 'icon': Icons.speed, 'color': Colors.purple},
       {'title': 'Cycles', 'value': battery.cycleCount > 0 ? '${battery.cycleCount}' : 'N/A', 'icon': Icons.loop, 'color': Colors.cyan},
     ];
 

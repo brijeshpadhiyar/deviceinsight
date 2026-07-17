@@ -87,4 +87,4 @@ final class DeviceCareProvider
   }
 }
 
-String _$deviceCareHash() => r'ecd16c85d0587c44969d52a5fe2d1ea3400c4d15';
+String _$deviceCareHash() => r'338a42b5689fbe1ec2cb4c47b83f544cd3022002';

@@ -15,6 +15,8 @@ abstract class BatteryInfo with _$BatteryInfo {
     @Default('Unknown') String technology,
     @Default(0) int cycleCount,
     @Default(0) int capacity,
+    @Default(0) int currentNow,
+    @Default(0.0) double batteryWear,
   }) = _BatteryInfo;
 
   factory BatteryInfo.fromJson(Map<String, dynamic> json) => _$BatteryInfoFromJson(json);

@@ -51,33 +51,100 @@ class DashboardNotifier extends _$DashboardNotifier {
 
   Future<void> _refreshStats() async {
     try {
-      final batteryLevel = await _battery.batteryLevel;
-      final batteryState = await _battery.batteryState;
-      
-      double batteryTemp = 0.0;
-      double cpuUsage = 0.0;
-      
       if (Platform.isAndroid) {
-        batteryTemp = await _channel.invokeMethod<double>('getBatteryTemperature') ?? 0.0;
-        cpuUsage = await _channel.invokeMethod<double>('getCpuUsage') ?? 0.0;
+        // Fetch real data from native method channels
+        final batteryInfo = await _channel.invokeMapMethod<String, dynamic>('getBatteryInfo');
+        final cpuInfo = await _channel.invokeMapMethod<String, dynamic>('getCpuInfo');
+        final memoryInfo = await _channel.invokeMapMethod<String, dynamic>('getMemoryInfo');
+        final storageInfo = await _channel.invokeMapMethod<String, dynamic>('getStorageStats');
+        final networkInfo = await _channel.invokeMapMethod<String, dynamic>('getNetworkStats');
+
+        double batteryTemp = batteryInfo?['temperature'] as double? ?? 0.0;
+        double batteryPct = batteryInfo?['percentage'] as double? ?? 0.0;
+        bool isCharging = batteryInfo?['isCharging'] as bool? ?? false;
+        
+        double cpuUsage = cpuInfo?['overallUsage'] as double? ?? 0.0;
+        
+        double totalMemory = (memoryInfo?['totalMemory'] as num?)?.toDouble() ?? 1.0;
+        double usedMemory = (memoryInfo?['usedMemory'] as num?)?.toDouble() ?? 0.0;
+        double ramUsage = (usedMemory / totalMemory) * 100.0;
+        
+        double totalSpace = (storageInfo?['totalSpace'] as num?)?.toDouble() ?? 1.0;
+        double usedSpace = (storageInfo?['usedSpace'] as num?)?.toDouble() ?? 0.0;
+        double storageUsagePct = (usedSpace / totalSpace) * 100.0;
+        
+        double dlSpeed = (networkInfo?['downloadSpeed'] as num?)?.toDouble() ?? 0.0;
+        double ulSpeed = (networkInfo?['uploadSpeed'] as num?)?.toDouble() ?? 0.0;
+        String internetStatus = networkInfo?['connectionType'] as String? ?? 'Disconnected';
+
+        // Advanced Health Score Calculations
+        // Battery Score
+        int bScore = 100;
+        if (batteryTemp > 45) {
+          bScore -= 50;
+        } else if (batteryTemp > 40) {
+          bScore -= 20;
+        } else if (batteryTemp > 35) {
+          bScore -= 5;
+        }
+        
+        if (batteryPct < 15 && !isCharging) {
+          bScore -= 15;
+        }
+        
+        // Performance Score
+        int pScore = 100;
+        if (cpuUsage > 90) {
+          pScore -= 40;
+        } else if (cpuUsage > 75) {
+          pScore -= 20;
+        }
+        
+        if (ramUsage > 90) {
+          pScore -= 30;
+        } else if (ramUsage > 80) {
+          pScore -= 10;
+        }
+        
+        // Storage Score
+        int sScore = 100;
+        if (storageUsagePct > 95) {
+          sScore -= 50;
+        } else if (storageUsagePct > 90) {
+          sScore -= 20;
+        }
+        
+        // Security Score (Mocked for dashboard overview until we poll real security data)
+        int secScore = 100;
+        
+        // Overall Health Score
+        int overall = ((bScore + pScore + sScore + secScore) / 4).round();
+        
+        state = state.copyWith(
+          batteryPercentage: batteryPct,
+          isCharging: isCharging,
+          batteryTemperature: batteryTemp,
+          cpuUsage: cpuUsage,
+          ramUsage: ramUsage,
+          storageUsage: storageUsagePct,
+          downloadSpeed: dlSpeed,
+          uploadSpeed: ulSpeed,
+          internetStatus: internetStatus,
+          batteryScore: bScore.clamp(0, 100),
+          performanceScore: pScore.clamp(0, 100),
+          storageScore: sScore.clamp(0, 100),
+          securityScore: secScore,
+          overallHealthScore: overall.clamp(0, 100),
+        );
+      } else {
+        // Fallback for non-Android platforms (if needed)
+        final batteryLevel = await _battery.batteryLevel;
+        final batteryState = await _battery.batteryState;
+        state = state.copyWith(
+          batteryPercentage: batteryLevel.toDouble(),
+          isCharging: batteryState == BatteryState.charging,
+        );
       }
-      
-      // Calculate mock scores based on simple heuristics
-      int bScore = (batteryTemp < 35.0) ? 100 : (batteryTemp < 40 ? 80 : 50);
-      int pScore = (cpuUsage < 50.0) ? 100 : (cpuUsage < 80 ? 75 : 40);
-      int overall = ((bScore + pScore + 100 + 100) / 4).round();
-      
-      state = state.copyWith(
-        batteryPercentage: batteryLevel.toDouble(),
-        isCharging: batteryState == BatteryState.charging,
-        batteryTemperature: batteryTemp,
-        cpuUsage: cpuUsage,
-        batteryScore: bScore,
-        performanceScore: pScore,
-        overallHealthScore: overall,
-        ramUsage: 45.0, // Mock for now
-        storageUsage: 65.0, // Mock for now
-      );
     } catch (e) {
       // Ignore errors during refresh
     }

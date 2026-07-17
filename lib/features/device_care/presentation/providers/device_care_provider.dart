@@ -22,7 +22,7 @@ Future<CareReport> deviceCare(Ref ref) async {
   // Watch other modules
   final batteryAsync = ref.watch(batteryStreamProvider);
   final storageAsync = ref.watch(storageStreamProvider);
-  final memoryAsync = ref.watch(memoryNotifierProvider);
+  final memoryAsync = ref.watch(memoryProvider);
   final securityAsync = ref.watch(securityProvider);
   
   // Construct DeviceState
@@ -30,7 +30,7 @@ Future<CareReport> deviceCare(Ref ref) async {
     batteryLevel: batteryAsync.value?.percentage ?? 100.0,
     batteryTemp: batteryAsync.value?.temperature ?? 30.0,
     usedMemoryGB: (memoryAsync.value?.usedMemory ?? 0) / (1024 * 1024 * 1024),
-    totalMemoryGB: (memoryAsync.value?.totalMemory ?? 1) / (1024 * 1024 * 1024),
+    totalMemoryGB: ((memoryAsync.value?.totalMemory ?? 1) > 0 ? (memoryAsync.value?.totalMemory ?? 1) : 1) / (1024 * 1024 * 1024),
     usedStorageGB: (storageAsync.value?.usedSpace ?? 0) / (1024 * 1024 * 1024),
     totalStorageGB: (storageAsync.value?.totalSpace ?? 1) / (1024 * 1024 * 1024),
     isDeveloperOptionsEnabled: securityAsync.value?.isDeveloperOptionsEnabled ?? false,

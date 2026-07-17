@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'cpu_provider.dart';
+part of 'memory_provider.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -9,43 +9,43 @@ part of 'cpu_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(CpuNotifier)
-final cpuProvider = CpuNotifierProvider._();
+@ProviderFor(MemoryNotifier)
+final memoryProvider = MemoryNotifierProvider._();
 
-final class CpuNotifierProvider
-    extends $StreamNotifierProvider<CpuNotifier, CpuInfo> {
-  CpuNotifierProvider._()
+final class MemoryNotifierProvider
+    extends $StreamNotifierProvider<MemoryNotifier, MemoryStats> {
+  MemoryNotifierProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
-        name: r'cpuProvider',
+        name: r'memoryProvider',
         isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
 
   @override
-  String debugGetCreateSourceHash() => _$cpuNotifierHash();
+  String debugGetCreateSourceHash() => _$memoryNotifierHash();
 
   @$internal
   @override
-  CpuNotifier create() => CpuNotifier();
+  MemoryNotifier create() => MemoryNotifier();
 }
 
-String _$cpuNotifierHash() => r'3116e3805d9ccacf1ca3a21da779d048fcbd244f';
+String _$memoryNotifierHash() => r'cb7dec8cc32788f5f13e86598325c64bf1cf74af';
 
-abstract class _$CpuNotifier extends $StreamNotifier<CpuInfo> {
-  Stream<CpuInfo> build();
+abstract class _$MemoryNotifier extends $StreamNotifier<MemoryStats> {
+  Stream<MemoryStats> build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<CpuInfo>, CpuInfo>;
+    final ref = this.ref as $Ref<AsyncValue<MemoryStats>, MemoryStats>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<CpuInfo>, CpuInfo>,
-              AsyncValue<CpuInfo>,
+              AnyNotifier<AsyncValue<MemoryStats>, MemoryStats>,
+              AsyncValue<MemoryStats>,
               Object?,
               Object?
             >;
