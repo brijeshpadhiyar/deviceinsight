@@ -9,6 +9,9 @@ import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/educational_card.dart';
 import '../domain/models/storage_stats.dart';
 import 'providers/storage_provider.dart';
+import '../../shared/widgets/glass_app_bar.dart';
+import '../../shared/widgets/glass_scaffold.dart';
+
 
 class StorageScreen extends ConsumerWidget {
   const StorageScreen({super.key});
@@ -31,26 +34,31 @@ class StorageScreen extends ConsumerWidget {
     final storageAsync = ref.watch(storageStreamProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Storage Analyzer'),
-        backgroundColor: Colors.transparent,
+    return GlassScaffold(
+      appBar: const GlassAppBar(
+        title: Text('Storage Analyzer'),
       ),
       body: storageAsync.when(
         data: (storage) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSizes.p20),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              top: 100, 
+              left: AppSizes.p20, 
+              right: AppSizes.p20,
+              bottom: 120, // accommodate floating nav bar
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildStorageHealth(storage, theme),
-                gapH24,
+                gapH32,
                 _buildStorageChart(storage, theme),
-                gapH24,
+                gapH32,
                 _buildOverviewCards(storage, theme),
-                gapH24,
+                gapH32,
                 _buildFileTypeBreakdown(storage, theme),
-                gapH24,
+                gapH32,
                 const EducationalCard(
                   title: 'Storage & Performance',
                   icon: Icons.sd_storage,
@@ -62,7 +70,7 @@ class StorageScreen extends ConsumerWidget {
                     'Delete large unused videos or back up photos to the cloud.',
                     'Uninstall unused applications.',
                   ],
-                ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2),
+                ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
               ],
             ),
           );
@@ -95,32 +103,40 @@ class StorageScreen extends ConsumerWidget {
             : 'Your storage is healthy and performing optimally.';
 
     return GlassCard(
-      padding: const EdgeInsets.all(AppSizes.p20),
+      animateOnEntry: true,
+      padding: const EdgeInsets.all(AppSizes.p24),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
+              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.3),
+                  blurRadius: 16,
+                )
+              ]
             ),
             child: Icon(
               isCritical ? Icons.error_rounded : (isFair ? Icons.warning_amber_rounded : Icons.check_circle_rounded),
               color: color,
-              size: 32,
-            ),
+              size: 36,
+            ).animate(onPlay: (c) => isCritical ? c.repeat(reverse: true) : null)
+             .scale(begin: const Offset(1,1), end: const Offset(1.1, 1.1), duration: 1.seconds),
           ),
-          gapW16,
+          gapW20,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold, color: color)),
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w900, color: color, letterSpacing: -0.5)),
                 gapH4,
                 Text(sub,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                         color:
                             theme.colorScheme.onSurface.withValues(alpha: 0.7))),
               ],
@@ -128,7 +144,7 @@ class StorageScreen extends ConsumerWidget {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1);
+    );
   }
 
   // ─── Donut Chart ─────────────────────────────────────────────────────────
@@ -137,22 +153,23 @@ class StorageScreen extends ConsumerWidget {
     final hasData = storage.usedSpace > 0;
 
     return GlassCard(
-      padding: const EdgeInsets.all(AppSizes.p24),
+      animateOnEntry: true,
+      padding: const EdgeInsets.all(AppSizes.p32),
       child: Column(
         children: [
           Text('Storage Overview',
               style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          gapH20,
+                  ?.copyWith(fontWeight: FontWeight.w900)),
+          gapH24,
           SizedBox(
-            height: 230,
+            height: 240,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 PieChart(
                   PieChartData(
-                    sectionsSpace: 3,
-                    centerSpaceRadius: 70,
+                    sectionsSpace: 4,
+                    centerSpaceRadius: 80, // slightly larger
                     startDegreeOffset: -90,
                     sections: hasData
                         ? [
@@ -161,22 +178,22 @@ class StorageScreen extends ConsumerWidget {
                                 value: c.bytes.toDouble(),
                                 color: c.color,
                                 title: '',
-                                radius: 28,
+                                radius: 30,
                               ),
                             ),
                             PieChartSectionData(
                               value: storage.freeSpace.toDouble(),
-                              color: theme.colorScheme.surfaceContainerHighest,
+                              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                               title: '',
-                              radius: 22,
+                              radius: 20,
                             ),
                           ]
                         : [
                             PieChartSectionData(
                               value: 1,
-                              color: theme.colorScheme.surfaceContainerHighest,
+                              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                               title: '',
-                              radius: 22,
+                              radius: 20,
                             ),
                           ],
                   ),
@@ -187,38 +204,39 @@ class StorageScreen extends ConsumerWidget {
                     TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0, end: storage.usagePercentage),
                       duration: const Duration(milliseconds: 1400),
-                      curve: Curves.easeOutCubic,
+                      curve: Curves.easeOutCirc,
                       builder: (context, val, _) => Text(
                         '${val.toStringAsFixed(1)}%',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        style: theme.textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
                           color: theme.colorScheme.primary,
                         ),
                       ),
                     ),
                     Text(
                       'of ${_formatBytes(storage.totalSpace)}',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-          ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-          gapH20,
+          ),
+          gapH24,
           // Legend
           Wrap(
             spacing: 16,
-            runSpacing: 8,
+            runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
               ...categories.map(
                 (c) => _buildLegendChip(theme, c.label, c.color),
               ),
               _buildLegendChip(
-                  theme, 'Free', theme.colorScheme.surfaceContainerHighest),
+                  theme, 'Free Space', theme.colorScheme.surfaceContainerHighest),
             ],
           ).animate().fadeIn(delay: 400.ms),
         ],
@@ -231,12 +249,12 @@ class StorageScreen extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        gapW4,
-        Text(label, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        gapW8,
+        Text(label, style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -244,8 +262,8 @@ class StorageScreen extends ConsumerWidget {
   // ─── Overview Cards (Total / Used / Free) ─────────────────────────────────
   Widget _buildOverviewCards(StorageStats storage, ThemeData theme) {
     final cards = [
-      _CardInfo('Total', _formatBytes(storage.totalSpace), Icons.storage, theme.colorScheme.primary),
-      _CardInfo('Used', _formatBytes(storage.usedSpace), Icons.folder_open, Colors.orange),
+      _CardInfo('Total', _formatBytes(storage.totalSpace), Icons.storage_outlined, theme.colorScheme.primary),
+      _CardInfo('Used', _formatBytes(storage.usedSpace), Icons.folder_open_outlined, Colors.orangeAccent),
       _CardInfo('Free', _formatBytes(storage.freeSpace), Icons.check_circle_outline, AppColors.healthExcellent),
     ];
 
@@ -257,20 +275,28 @@ class StorageScreen extends ConsumerWidget {
           child: Padding(
             padding: EdgeInsets.only(left: idx == 0 ? 0 : 8, right: idx == 2 ? 0 : 8),
             child: GlassCard(
-              padding: const EdgeInsets.all(AppSizes.p12),
+              animateOnEntry: true,
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p16),
               child: Column(
                 children: [
-                  Icon(c.icon, color: c.color, size: 24),
-                  gapH8,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: c.color.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(c.icon, color: c.color, size: 24),
+                  ),
+                  gapH12,
                   Text(c.label,
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: theme.textTheme.labelMedium?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                          fontSize: 10),
+                          fontWeight: FontWeight.w600),
                       textAlign: TextAlign.center),
                   gapH4,
                   Text(c.value,
-                      style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w900),
                       textAlign: TextAlign.center),
                 ],
               ),
@@ -293,9 +319,9 @@ class StorageScreen extends ConsumerWidget {
       children: [
         Text(
           'File Type Breakdown',
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
         ).animate().fadeIn(delay: 400.ms),
-        gapH12,
+        gapH16,
         ...categories.asMap().entries.map((e) {
           final idx = e.key;
           final cat = e.value;
@@ -303,7 +329,7 @@ class StorageScreen extends ConsumerWidget {
               ? (cat.bytes / storage.usedSpace).clamp(0.0, 1.0)
               : 0.0;
           return Padding(
-            padding: const EdgeInsets.only(bottom: AppSizes.p12),
+            padding: const EdgeInsets.only(bottom: AppSizes.p16),
             child: _buildCategoryRow(theme, cat, fraction)
                 .animate()
                 .fadeIn(delay: (450 + idx * 60).ms)
@@ -316,20 +342,21 @@ class StorageScreen extends ConsumerWidget {
 
   Widget _buildCategoryRow(ThemeData theme, _CategoryInfo cat, double fraction) {
     return GlassCard(
-      padding: const EdgeInsets.all(AppSizes.p16),
+      animateOnEntry: true,
+      padding: const EdgeInsets.all(AppSizes.p20),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: cat.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(cat.icon, color: cat.color, size: 22),
+                child: Icon(cat.icon, color: cat.color, size: 26),
               ),
-              gapW16,
+              gapW20,
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,37 +366,38 @@ class StorageScreen extends ConsumerWidget {
                       children: [
                         Text(cat.label,
                             style: theme.textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold)),
+                                ?.copyWith(fontWeight: FontWeight.w800)),
                         Text(
                           _formatBytes(cat.bytes),
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
                             color: cat.color,
                           ),
                         ),
                       ],
                     ),
-                    gapH4,
+                    gapH8,
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                       child: TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0, end: fraction),
                         duration: const Duration(milliseconds: 1000),
                         curve: Curves.easeOutCubic,
                         builder: (context, val, _) => LinearProgressIndicator(
                           value: val,
-                          minHeight: 6,
+                          minHeight: 8,
                           color: cat.color,
                           backgroundColor:
                               cat.color.withValues(alpha: 0.15),
                         ),
                       ),
                     ),
-                    gapH4,
+                    gapH8,
                     Text(
                       '${(fraction * 100).toStringAsFixed(1)}% of used space',
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: theme.textTheme.labelMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -395,25 +423,25 @@ class StorageScreen extends ConsumerWidget {
       _CategoryInfo(
           label: 'Videos',
           icon: Icons.videocam_outlined,
-          color: Colors.deepPurple,
+          color: Colors.deepPurpleAccent,
           bytes: storage.videosBytes),
       _CategoryInfo(
           label: 'Audio',
           icon: Icons.music_note_outlined,
-          color: Colors.orange,
+          color: Colors.orangeAccent,
           bytes: storage.audioBytes),
       _CategoryInfo(
           label: 'Apps',
           icon: Icons.apps_outlined,
-          color: Colors.blue,
+          color: Colors.lightBlueAccent,
           bytes: storage.appsBytes),
       _CategoryInfo(
           label: 'Documents',
           icon: Icons.description_outlined,
-          color: Colors.teal,
+          color: Colors.tealAccent,
           bytes: storage.documentsBytes),
       _CategoryInfo(
-          label: 'Other (System & Cache)',
+          label: 'Other',
           icon: Icons.folder_special_outlined,
           color: Colors.blueGrey,
           bytes: storage.otherBytes),

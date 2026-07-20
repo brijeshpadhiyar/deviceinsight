@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/glass_app_bar.dart';
+import '../../shared/widgets/glass_scaffold.dart';
 import '../data/speed_test_repository_impl.dart';
 import '../domain/models/speed_test_history.dart';
 
@@ -81,12 +83,14 @@ class _SpeedTestScreenState extends ConsumerState<SpeedTestScreen> {
     
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
+      child: GlassScaffold(
+        appBar: GlassAppBar(
           title: const Text('Speed Test'),
-          backgroundColor: Colors.transparent,
-          bottom: const TabBar(
-            tabs: [
+          bottom: TabBar(
+            indicatorColor: theme.colorScheme.primary,
+            labelStyle: const TextStyle(fontWeight: FontWeight.w900),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+            tabs: const [
               Tab(text: 'SPEED'),
               Tab(text: 'HISTORY'),
             ],
@@ -104,65 +108,109 @@ class _SpeedTestScreenState extends ConsumerState<SpeedTestScreen> {
 
   Widget _buildTestTab(ThemeData theme) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.p20),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(
+        top: 130, // Account for appbar + tabs
+        left: AppSizes.p20, 
+        right: AppSizes.p20,
+        bottom: 120, // Account for floating nav bar
+      ),
       child: Column(
         children: [
           GlassCard(
-            padding: const EdgeInsets.all(AppSizes.p32),
+            animateOnEntry: true,
+            padding: const EdgeInsets.all(AppSizes.p48),
             child: Column(
               children: [
                 Text(
                   _phase == 'idle' ? 'Ready to Test' : _phase.toUpperCase(),
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: _phase == 'download' ? AppColors.success : (_phase == 'upload' ? Colors.blue : theme.colorScheme.onSurface),
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
                   ),
-                ),
-                gapH16,
-                Text(
-                  _currentValue.toStringAsFixed(1),
-                  style: theme.textTheme.displayLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
+                ).animate(target: _isRunning ? 1 : 0).fade(),
+                gapH24,
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: _currentValue),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCirc,
+                  builder: (context, val, _) {
+                    return Text(
+                      val.toStringAsFixed(1),
+                      style: theme.textTheme.displayLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: theme.colorScheme.primary,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    );
+                  }
                 ),
                 Text(
                   _phase == 'ping' ? 'ms' : 'Mbps',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                gapH32,
+                gapH48,
                 if (!_isRunning)
-                  ElevatedButton(
-                    onPressed: _startTest,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  GestureDetector(
+                    onTap: _startTest,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary,
+                            AppColors.secondaryDark, // cyan
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(100),
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          )
+                        ],
+                      ),
+                      child: Text(
+                        'GO',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                        ),
+                      ),
                     ),
-                    child: Text('GO', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onPrimary)),
-                  ).animate().scale(),
+                  ).animate().fadeIn().scale(duration: 400.ms, curve: Curves.easeOutBack),
                 if (_isRunning)
-                  const CircularProgressIndicator(),
+                  SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 6,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ).animate().fadeIn(),
               ],
             ),
-          ).animate().fadeIn(),
-          gapH24,
+          ),
+          gapH32,
           Row(
             children: [
-              Expanded(child: _buildMetricCard(theme, 'Ping', '$_ping', 'ms', Icons.compare_arrows)),
+              Expanded(child: _buildMetricCard(theme, 'Ping', '$_ping', 'ms', Icons.compare_arrows_outlined)),
               gapW16,
-              Expanded(child: _buildMetricCard(theme, 'Jitter', '$_jitter', 'ms', Icons.timeline)),
+              Expanded(child: _buildMetricCard(theme, 'Jitter', '$_jitter', 'ms', Icons.timeline_outlined)),
             ],
           ).animate().fadeIn(delay: 100.ms),
           gapH16,
           Row(
             children: [
-              Expanded(child: _buildMetricCard(theme, 'Download', _download.toStringAsFixed(1), 'Mbps', Icons.download, color: AppColors.success)),
+              Expanded(child: _buildMetricCard(theme, 'Download', _download.toStringAsFixed(1), 'Mbps', Icons.download_outlined, color: AppColors.success)),
               gapW16,
-              Expanded(child: _buildMetricCard(theme, 'Upload', _upload.toStringAsFixed(1), 'Mbps', Icons.upload, color: Colors.blue)),
+              Expanded(child: _buildMetricCard(theme, 'Upload', _upload.toStringAsFixed(1), 'Mbps', Icons.upload_outlined, color: Colors.blueAccent)),
             ],
           ).animate().fadeIn(delay: 200.ms),
         ],
@@ -172,25 +220,33 @@ class _SpeedTestScreenState extends ConsumerState<SpeedTestScreen> {
 
   Widget _buildMetricCard(ThemeData theme, String title, String value, String unit, IconData icon, {Color? color}) {
     return GlassCard(
-      padding: const EdgeInsets.all(AppSizes.p16),
+      animateOnEntry: true,
+      padding: const EdgeInsets.all(AppSizes.p20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: color ?? theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              Icon(icon, size: 20, color: color ?? theme.colorScheme.onSurface.withValues(alpha: 0.6)),
               gapW8,
-              Text(title, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+              Text(title, style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.w600)),
             ],
           ),
-          gapH8,
+          gapH12,
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(value, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: color)),
+              Text(
+                value, 
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900, 
+                  color: color ?? theme.colorScheme.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                )
+              ),
               gapW4,
-              Text(unit, style: theme.textTheme.bodySmall),
+              Text(unit, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
             ],
           ),
         ],
@@ -204,23 +260,31 @@ class _SpeedTestScreenState extends ConsumerState<SpeedTestScreen> {
       data: (history) {
         if (history.isEmpty) return const Center(child: Text('No previous tests found.'));
         return ListView.builder(
-          padding: const EdgeInsets.all(AppSizes.p20),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.only(
+            top: 130, // Account for appbar + tabs
+            left: AppSizes.p20, 
+            right: AppSizes.p20,
+            bottom: 120, // Account for floating nav bar
+          ),
           itemCount: history.length,
           itemBuilder: (context, index) {
             final item = history[index];
             final timeStr = '${item.timestamp.day}/${item.timestamp.month} ${item.timestamp.hour}:${item.timestamp.minute.toString().padLeft(2, '0')}';
             return Padding(
-              padding: const EdgeInsets.only(bottom: AppSizes.p12),
+              padding: const EdgeInsets.only(bottom: AppSizes.p16),
               child: GlassCard(
-                padding: const EdgeInsets.all(AppSizes.p16),
+                animateOnEntry: true,
+                padding: const EdgeInsets.all(AppSizes.p20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(timeStr, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        Text('${item.networkType} - ${item.serverName}', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                        Text(timeStr, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                        gapH4,
+                        Text('${item.networkType} - ${item.serverName}', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
                       ],
                     ),
                     Row(
@@ -230,16 +294,17 @@ class _SpeedTestScreenState extends ConsumerState<SpeedTestScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.download, size: 12, color: AppColors.success),
-                                gapW4,
-                                Text(item.downloadMbps.toStringAsFixed(1), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                                const Icon(Icons.download, size: 14, color: AppColors.success),
+                                gapW6,
+                                Text(item.downloadMbps.toStringAsFixed(1), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, fontFeatures: const [FontFeature.tabularFigures()])),
                               ],
                             ),
+                            gapH4,
                             Row(
                               children: [
-                                const Icon(Icons.upload, size: 12, color: Colors.blue),
-                                gapW4,
-                                Text(item.uploadMbps.toStringAsFixed(1), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+                                const Icon(Icons.upload, size: 14, color: Colors.blueAccent),
+                                gapW6,
+                                Text(item.uploadMbps.toStringAsFixed(1), style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, fontFeatures: const [FontFeature.tabularFigures()])),
                               ],
                             ),
                           ],

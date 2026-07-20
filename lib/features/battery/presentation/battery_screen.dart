@@ -6,6 +6,8 @@ import '../../../core/constants/app_sizes.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/live_gauge.dart';
 import '../../shared/widgets/educational_card.dart';
+import '../../shared/widgets/glass_app_bar.dart';
+import '../../shared/widgets/glass_scaffold.dart';
 import '../domain/models/battery_info.dart';
 import 'providers/battery_provider.dart';
 
@@ -17,24 +19,34 @@ class BatteryScreen extends ConsumerWidget {
     final batteryAsync = ref.watch(batteryStreamProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Battery Health'),
-        backgroundColor: Colors.transparent,
+    return GlassScaffold(
+      appBar: const GlassAppBar(
+        title: Text('Battery Health'),
       ),
       body: batteryAsync.when(
         data: (battery) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSizes.p20),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              top: 100, // accommodate app bar
+              left: AppSizes.p20, 
+              right: AppSizes.p20,
+              bottom: 120, // accommodate floating nav bar
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildHealthStatus(battery, theme),
-                gapH24,
+                gapH32,
                 _buildMainGauge(battery, theme),
-                gapH24,
+                gapH32,
+                Text(
+                  'Battery Details',
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                ).animate().fadeIn(delay: 200.ms),
+                gapH16,
                 _buildDetailsGrid(battery, theme),
-                gapH24,
+                gapH32,
                 const EducationalCard(
                   title: 'Battery Lifespan & Wear',
                   icon: Icons.battery_charging_full,
@@ -45,7 +57,7 @@ class BatteryScreen extends ConsumerWidget {
                     'Keep the device cool, especially while gaming or fast-charging.',
                     'Use original or certified chargers to ensure safe voltage levels.'
                   ],
-                ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
+                ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
               ],
             ),
           );
@@ -61,53 +73,69 @@ class BatteryScreen extends ConsumerWidget {
     final bool isGood = battery.health.toLowerCase() == 'good' && !isHot;
     
     final color = isHot ? AppColors.error : (isGood ? AppColors.healthExcellent : AppColors.healthFair);
-    final icon = isHot ? Icons.local_fire_department : (isGood ? Icons.verified : Icons.warning_amber);
+    final icon = isHot ? Icons.whatshot : (isGood ? Icons.verified : Icons.warning_amber);
     final title = isHot ? 'Overheating Warning' : (isGood ? 'Battery is Healthy' : 'Degraded Health');
 
     return GlassCard(
-      padding: const EdgeInsets.all(AppSizes.p20),
+      animateOnEntry: true,
+      padding: const EdgeInsets.all(AppSizes.p24),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: Icon(icon, color: color, size: 32),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15), 
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.3),
+                  blurRadius: 16,
+                )
+              ]
+            ),
+            child: Icon(icon, color: color, size: 36)
+                .animate(onPlay: (c) => isHot ? c.repeat(reverse: true) : null)
+                .scale(begin: const Offset(1,1), end: const Offset(1.1,1.1), duration: 1.seconds),
           ),
-          gapW16,
+          gapW20,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: color),
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900, color: color, letterSpacing: -0.5),
                 ),
                 gapH4,
                 Text(
                   isHot ? 'Your device is too hot! Cool it down.' : 'Operating in safe conditions.',
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
                 ),
               ],
             ),
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1);
+    );
   }
 
   Widget _buildMainGauge(BatteryInfo battery, ThemeData theme) {
+    final bool isLow = battery.percentage <= 20;
+    final color = battery.isCharging ? AppColors.success : (isLow ? AppColors.error : AppColors.primaryDark);
+
     return GlassCard(
+      animateOnEntry: true,
       padding: const EdgeInsets.all(AppSizes.p32),
       child: Center(
         child: LiveGauge(
           title: '${battery.percentage.toStringAsFixed(0)}%',
           subtitle: battery.isCharging ? 'Charging (${battery.status})' : battery.status,
           value: battery.percentage / 100,
-          color: battery.isCharging ? AppColors.success : (battery.percentage <= 20 ? AppColors.error : theme.colorScheme.primary),
-          icon: battery.isCharging ? Icons.bolt : Icons.battery_std,
+          color: color,
+          icon: battery.isCharging ? Icons.bolt : (isLow ? Icons.battery_alert : Icons.battery_std),
         ),
       ),
-    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
+    );
   }
 
   Widget _buildDetailsGrid(BatteryInfo battery, ThemeData theme) {
@@ -116,12 +144,12 @@ class BatteryScreen extends ConsumerWidget {
         : (battery.currentNow < 0 ? '${(battery.currentNow / 1000).toStringAsFixed(0)} mA' : 'Idle');
 
     final details = [
-      {'title': 'Health', 'value': battery.health, 'icon': Icons.favorite, 'color': AppColors.healthExcellent},
-      {'title': 'Temperature', 'value': '${battery.temperature.toStringAsFixed(1)}°C', 'icon': Icons.thermostat, 'color': battery.temperature > 39 ? AppColors.error : Colors.orange},
-      {'title': 'Voltage', 'value': '${battery.voltage.toInt()} mV', 'icon': Icons.electric_bolt, 'color': Colors.blue},
-      {'title': 'Capacity', 'value': battery.capacity > 0 ? '${battery.capacity} mAh' : 'Unknown', 'icon': Icons.battery_full, 'color': Colors.teal},
-      {'title': 'Speed / Drain', 'value': speedStr, 'icon': Icons.speed, 'color': Colors.purple},
-      {'title': 'Cycles', 'value': battery.cycleCount > 0 ? '${battery.cycleCount}' : 'N/A', 'icon': Icons.loop, 'color': Colors.cyan},
+      {'title': 'Health Status', 'value': battery.health, 'icon': Icons.favorite_outline, 'color': AppColors.healthExcellent},
+      {'title': 'Temperature', 'value': '${battery.temperature.toStringAsFixed(1)}°C', 'icon': Icons.thermostat, 'color': battery.temperature > 39 ? AppColors.error : Colors.orangeAccent},
+      {'title': 'Voltage', 'value': '${battery.voltage.toInt()} mV', 'icon': Icons.electric_bolt, 'color': Colors.lightBlueAccent},
+      {'title': 'Max Capacity', 'value': battery.capacity > 0 ? '${battery.capacity} mAh' : 'Unknown', 'icon': Icons.battery_full_outlined, 'color': Colors.tealAccent},
+      {'title': 'Drain Speed', 'value': speedStr, 'icon': Icons.speed, 'color': Colors.purpleAccent},
+      {'title': 'Charge Cycles', 'value': battery.cycleCount > 0 ? '${battery.cycleCount}' : 'N/A', 'icon': Icons.loop, 'color': Colors.cyanAccent},
     ];
 
     return GridView.builder(
@@ -129,30 +157,47 @@ class BatteryScreen extends ConsumerWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: details.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: AppSizes.p12,
-        mainAxisSpacing: AppSizes.p12,
-        childAspectRatio: 1.0,
+        crossAxisCount: 2, // Changed from 3 to 2 for a much more premium and readable layout
+        crossAxisSpacing: AppSizes.p16,
+        mainAxisSpacing: AppSizes.p16,
+        childAspectRatio: 1.5,
       ),
       itemBuilder: (context, index) {
         final item = details[index];
         return GlassCard(
-          padding: const EdgeInsets.all(AppSizes.p8),
+          animateOnEntry: true,
+          padding: const EdgeInsets.all(AppSizes.p16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(item['icon'] as IconData, color: item['color'] as Color, size: 24),
-              gapH8,
-              Text(
-                item['title'] as String,
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 10),
-                textAlign: TextAlign.center,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: (item['color'] as Color).withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(item['icon'] as IconData, color: item['color'] as Color, size: 20),
+                  ),
+                  gapW12,
+                  Expanded(
+                    child: Text(
+                      item['title'] as String,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              gapH4,
+              const Spacer(),
               Text(
                 item['value'] as String,
-                style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
             ],
           ),
@@ -161,3 +206,4 @@ class BatteryScreen extends ConsumerWidget {
     );
   }
 }
+

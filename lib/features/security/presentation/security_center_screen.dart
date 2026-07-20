@@ -5,6 +5,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../shared/widgets/glass_card.dart';
 import 'providers/security_provider.dart';
+import '../../shared/widgets/glass_app_bar.dart';
+import '../../shared/widgets/glass_scaffold.dart';
 
 class SecurityCenterScreen extends ConsumerWidget {
   const SecurityCenterScreen({super.key});
@@ -14,10 +16,9 @@ class SecurityCenterScreen extends ConsumerWidget {
     final securityAsync = ref.watch(securityProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Security & Privacy Center'),
-        backgroundColor: Colors.transparent,
+    return GlassScaffold(
+      appBar: const GlassAppBar(
+        title: Text('Security & Privacy Center'),
       ),
       body: securityAsync.when(
         data: (state) {
@@ -32,50 +33,74 @@ class SecurityCenterScreen extends ConsumerWidget {
           final color = score > 80 ? AppColors.success : (score > 50 ? AppColors.warning : AppColors.error);
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSizes.p20),
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              top: 100,
+              left: AppSizes.p20,
+              right: AppSizes.p20,
+              bottom: 120, // accommodate floating nav bar
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Score Gauge
                 GlassCard(
-                  padding: const EdgeInsets.all(AppSizes.p32),
+                  animateOnEntry: true,
+                  padding: const EdgeInsets.all(AppSizes.p48),
                   child: Column(
                     children: [
-                      Text('Security Score', style: theme.textTheme.titleMedium),
-                      gapH16,
+                      Text('Security Score', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                      gapH32,
                       Stack(
                         alignment: Alignment.center,
                         children: [
                           SizedBox(
-                            width: 150,
-                            height: 150,
+                            width: 200,
+                            height: 200,
                             child: CircularProgressIndicator(
                               value: score / 100,
-                              strokeWidth: 12,
+                              strokeWidth: 20,
+                              strokeCap: StrokeCap.round,
                               color: color,
-                              backgroundColor: color.withValues(alpha: 0.2),
+                              backgroundColor: color.withValues(alpha: 0.15),
                             ),
                           ),
-                          Text('$score', style: theme.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.bold, color: color)),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('$score', style: theme.textTheme.displayLarge?.copyWith(fontWeight: FontWeight.w900, color: color, letterSpacing: -2)),
+                              Text('Out of 100', style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                            ],
+                          ),
                         ],
-                      ).animate().scale(),
-                      gapH16,
-                      Text(score > 80 ? 'Excellent Protection' : (score > 50 ? 'Needs Attention' : 'Critical Risk'), style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: color)),
+                      ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                      gapH32,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Text(
+                          score > 80 ? 'Excellent Protection' : (score > 50 ? 'Needs Attention' : 'Critical Risk'), 
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900, color: color)
+                        ),
+                      ),
                     ],
                   ),
-                ).animate().fadeIn(),
-                gapH24,
+                ),
+                gapH32,
 
-                Text('System Security', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)).animate().fadeIn(delay: 200.ms),
-                gapH12,
+                Text('System Security', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)).animate().fadeIn(delay: 200.ms),
+                gapH16,
                 
-                _buildSecurityItem(theme, 'Screen Lock', state.isDeviceSecure, 'Device is secured', 'No screen lock detected'),
-                _buildSecurityItem(theme, 'Storage Encryption', state.isEncrypted, 'Data is encrypted', 'Data is unencrypted'),
-                _buildSecurityItem(theme, 'Unknown Sources', !state.isUnknownSourcesEnabled, 'Restricted', 'Allowed (High Risk)'),
-                _buildSecurityItem(theme, 'Developer Options', !state.isDeveloperOptionsEnabled, 'Disabled', 'Enabled'),
-                _buildSecurityItem(theme, 'Root Access', !state.isRooted, 'Not Rooted', 'Root Detected'),
-                _buildSecurityItem(theme, 'Biometrics', state.biometricAvailable, 'Available', 'Unavailable'),
-                _buildSecurityItem(theme, 'SELinux', state.seLinuxMode.toLowerCase().contains('enforcing'), 'Enforcing', 'Permissive / Unknown'),
+                _buildSecurityItem(theme, 'Screen Lock', state.isDeviceSecure, 'Device is secured', 'No screen lock detected', 300),
+                _buildSecurityItem(theme, 'Storage Encryption', state.isEncrypted, 'Data is encrypted', 'Data is unencrypted', 400),
+                _buildSecurityItem(theme, 'Unknown Sources', !state.isUnknownSourcesEnabled, 'Restricted', 'Allowed (High Risk)', 500),
+                _buildSecurityItem(theme, 'Developer Options', !state.isDeveloperOptionsEnabled, 'Disabled', 'Enabled', 600),
+                _buildSecurityItem(theme, 'Root Access', !state.isRooted, 'Not Rooted', 'Root Detected', 700),
+                _buildSecurityItem(theme, 'Biometrics', state.biometricAvailable, 'Available', 'Unavailable', 800),
+                _buildSecurityItem(theme, 'SELinux', state.seLinuxMode.toLowerCase().contains('enforcing'), 'Enforcing', 'Permissive / Unknown', 900),
               ],
             ),
           );
@@ -86,27 +111,36 @@ class SecurityCenterScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSecurityItem(ThemeData theme, String title, bool isSecure, String secureText, String insecureText) {
+  Widget _buildSecurityItem(ThemeData theme, String title, bool isSecure, String secureText, String insecureText, int delay) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.p12),
+      padding: const EdgeInsets.only(bottom: AppSizes.p16),
       child: GlassCard(
-        padding: const EdgeInsets.all(AppSizes.p16),
+        animateOnEntry: true,
+        padding: const EdgeInsets.all(AppSizes.p20),
         child: Row(
           children: [
-            Icon(isSecure ? Icons.check_circle : Icons.warning, color: isSecure ? AppColors.success : AppColors.error, size: 28),
-            gapW16,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (isSecure ? AppColors.success : AppColors.error).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(isSecure ? Icons.shield_outlined : Icons.gpp_bad_outlined, color: isSecure ? AppColors.success : AppColors.error, size: 28),
+            ),
+            gapW20,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                  Text(isSecure ? secureText : insecureText, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                  Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                  gapH4,
+                  Text(isSecure ? secureText : insecureText, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7))),
                 ],
               ),
             ),
           ],
         ),
-      ).animate().fadeIn().slideX(begin: 0.1),
+      ).animate().fadeIn(delay: delay.ms).slideX(begin: 0.1),
     );
   }
 }

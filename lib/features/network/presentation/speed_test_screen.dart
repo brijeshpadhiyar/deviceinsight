@@ -152,7 +152,7 @@ class _SpeedTestScreenState extends ConsumerState<SpeedTestScreen>
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Speed Test'),
-          backgroundColor: Colors.transparent,
+          
           bottom: const TabBar(
             tabs: [Tab(text: 'TEST'), Tab(text: 'HISTORY')],
           ),

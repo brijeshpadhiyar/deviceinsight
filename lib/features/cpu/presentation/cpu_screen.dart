@@ -9,6 +9,8 @@ import '../../dashboard/providers/dashboard_provider.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/live_gauge.dart';
 import '../../shared/widgets/educational_card.dart';
+import '../../shared/widgets/glass_app_bar.dart';
+import '../../shared/widgets/glass_scaffold.dart';
 import '../domain/models/cpu_info.dart';
 import 'providers/cpu_provider.dart';
 
@@ -23,29 +25,44 @@ class CpuScreen extends ConsumerWidget {
     final isThrottling = dashboardState.batteryTemperature > 40.0;
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('CPU Info'),
-        backgroundColor: Colors.transparent,
+    return GlassScaffold(
+      appBar: const GlassAppBar(
+        title: Text('CPU Performance'),
       ),
       body: cpuAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error: $error')),
         data: (cpu) => SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSizes.p20),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.only(
+            top: 100, 
+            left: AppSizes.p20, 
+            right: AppSizes.p20,
+            bottom: 120,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildMainGauge(cpu, theme),
-              gapH24,
+              gapH32,
               if (isThrottling) ...[
                 _buildThrottlingWarning(theme),
-                gapH24,
+                gapH32,
               ],
+              Text(
+                'Performance History',
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ).animate().fadeIn(delay: 100.ms),
+              gapH16,
               _buildCpuChart(cpu, history, theme),
-              gapH24,
+              gapH32,
+              Text(
+                'Hardware Details',
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ).animate().fadeIn(delay: 200.ms),
+              gapH16,
               _buildDetailsGrid(cpu, theme),
-              gapH24,
+              gapH32,
               const EducationalCard(
                 title: 'CPU Architecture & Governors',
                 icon: Icons.memory,
@@ -55,7 +72,7 @@ class CpuScreen extends ConsumerWidget {
                   'Clear recent apps to stop runaway background processes.',
                   'If the device overheats, the CPU automatically slows down (throttling) to prevent damage.',
                 ],
-              ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2),
+              ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
             ],
           ),
         ),
@@ -65,45 +82,56 @@ class CpuScreen extends ConsumerWidget {
 
   Widget _buildMainGauge(CpuInfo cpu, ThemeData theme) {
     final bool isHighLoad = cpu.overallUsage > 85.0;
+    final color = isHighLoad ? AppColors.error : AppColors.secondaryDark; // Neon cyan
 
     return GlassCard(
+      animateOnEntry: true,
       padding: const EdgeInsets.all(AppSizes.p32),
       child: Center(
         child: LiveGauge(
           title: '${cpu.overallUsage.toStringAsFixed(1)}%',
           subtitle: isHighLoad ? 'High Load' : 'Normal Load',
           value: cpu.overallUsage / 100,
-          color: isHighLoad ? AppColors.error : AppColors.info,
-          icon: Icons.memory,
+          color: color,
+          icon: Icons.memory_outlined,
         ),
       ),
-    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
+    );
   }
 
   Widget _buildThrottlingWarning(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(AppSizes.p16),
+      padding: const EdgeInsets.all(AppSizes.p20),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: AppColors.error.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.5)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.error.withValues(alpha: 0.2),
+            blurRadius: 16,
+          )
+        ]
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning, color: AppColors.error),
-          gapW12,
+          const Icon(Icons.whatshot, color: AppColors.error, size: 32)
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scale(begin: const Offset(1,1), end: const Offset(1.1,1.1), duration: 500.ms),
+          gapW16,
           Expanded(
             child: Text(
-              'Thermal Throttling Active! CPU performance is reduced to lower device temperature.',
+              'Thermal Throttling Active! CPU performance is heavily reduced to lower device temperature.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.error,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
               ),
             ),
           ),
         ],
       ),
-    ).animate().shake(delay: 500.ms);
+    ).animate().shake(delay: 500.ms).fadeIn();
   }
 
   Widget _buildCpuChart(CpuInfo cpu, List<double> history, ThemeData theme) {
@@ -115,27 +143,30 @@ class CpuScreen extends ConsumerWidget {
         spots.add(FlSpot(i.toDouble(), history[i]));
       }
     }
+    
+    final color = theme.brightness == Brightness.dark ? AppColors.secondaryDark : AppColors.secondaryLight;
 
     return GlassCard(
+      animateOnEntry: true,
       padding: const EdgeInsets.all(AppSizes.p20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_graph, color: AppColors.info, size: 20),
-              gapW8,
+              Icon(Icons.auto_graph, color: color, size: 24),
+              gapW12,
               Text(
                 'Utilization Trend',
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-          gapH16,
+          gapH24,
           SizedBox(
-            height: 150,
+            height: 180, // slightly taller
             child: LineChart(
               LineChartData(
                 gridData: const FlGridData(show: false),
@@ -149,12 +180,19 @@ class CpuScreen extends ConsumerWidget {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    color: AppColors.info,
+                    color: color,
                     barWidth: 4,
                     dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: AppColors.info.withValues(alpha: 0.2),
+                      gradient: LinearGradient(
+                        colors: [
+                          color.withValues(alpha: 0.4),
+                          color.withValues(alpha: 0.0),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
                     ),
                   ),
                 ],
@@ -163,7 +201,7 @@ class CpuScreen extends ConsumerWidget {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 200.ms);
+    );
   }
 
   Widget _buildDetailsGrid(CpuInfo cpu, ThemeData theme) {
@@ -172,19 +210,25 @@ class CpuScreen extends ConsumerWidget {
         'title': 'Architecture',
         'value': cpu.architecture,
         'icon': Icons.architecture,
-        'color': Colors.deepPurple,
+        'color': Colors.deepPurpleAccent,
       },
       {
-        'title': 'Cores',
+        'title': 'Active Cores',
         'value': '${cpu.coreCount}',
         'icon': Icons.developer_board,
-        'color': Colors.teal,
+        'color': Colors.tealAccent,
       },
       {
-        'title': 'Max Freq',
+        'title': 'Max Frequency',
         'value': 'Unknown',
         'icon': Icons.speed,
-        'color': Colors.amber,
+        'color': Colors.amberAccent,
+      },
+      {
+        'title': 'Instruction Set',
+        'value': '64-bit', // placeholder
+        'icon': Icons.memory_outlined,
+        'color': Colors.blueAccent,
       },
     ];
 
@@ -193,35 +237,49 @@ class CpuScreen extends ConsumerWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: details.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: AppSizes.p12,
-        mainAxisSpacing: AppSizes.p12,
-        childAspectRatio: 1.0,
+        crossAxisCount: 2, // Upgraded from 3 to 2
+        crossAxisSpacing: AppSizes.p16,
+        mainAxisSpacing: AppSizes.p16,
+        childAspectRatio: 1.5,
       ),
       itemBuilder: (context, index) {
         final item = details[index];
         return GlassCard(
-          padding: const EdgeInsets.all(AppSizes.p8),
+          animateOnEntry: true,
+          padding: const EdgeInsets.all(AppSizes.p16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(item['icon'] as IconData, color: item['color'] as Color, size: 24),
-              gapH8,
-              Text(
-                item['title'] as String,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  fontSize: 10,
-                ),
-                textAlign: TextAlign.center,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: (item['color'] as Color).withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(item['icon'] as IconData, color: item['color'] as Color, size: 20),
+                  ),
+                  gapW12,
+                  Expanded(
+                    child: Text(
+                      item['title'] as String,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              gapH4,
+              const Spacer(),
               Text(
                 item['value'] as String,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
                 ),
-                textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -232,3 +290,4 @@ class CpuScreen extends ConsumerWidget {
     );
   }
 }
+

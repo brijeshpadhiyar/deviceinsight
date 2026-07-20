@@ -10,6 +10,9 @@ import '../../shared/widgets/educational_card.dart';
 import '../../shared/widgets/glass_card.dart';
 import 'providers/app_icon_provider.dart';
 import 'providers/apps_provider.dart';
+import '../../shared/widgets/glass_app_bar.dart';
+import '../../shared/widgets/glass_scaffold.dart';
+
 
 class AppDetailsScreen extends ConsumerWidget {
   final String packageName;
@@ -20,10 +23,10 @@ class AppDetailsScreen extends ConsumerWidget {
     final detailsAsync = ref.watch(appDetailsProvider(packageName));
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
+    return GlassScaffold(
+      appBar: GlassAppBar(
         title: const Text('App Details'),
-        backgroundColor: Colors.transparent,
+        
       ),
       body: detailsAsync.when(
         data: (details) {
